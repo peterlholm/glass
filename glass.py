@@ -25,7 +25,6 @@ def process(img1, img2):
     "process the images and return the strength of the glass"
     full_img1 = cv.imread(str(img1))
     full_img2 = cv.imread(str(img2))
-
     work_scale_ = 1
     seam_work_aspect_ = 1
     seam_scale_ = 1
@@ -36,19 +35,8 @@ def process(img1, img2):
     work_scale = math.sqrt(0.6 * 1e6 / full_img1.size)
     print(work_scale_)
     is_work_scale_set = True
-    #features_.resize(imgs_.size());
-    #seam_est_imgs_.resize(imgs_.size());
-    #full_img_sizes_.resize(imgs_.size());
-
-    # sift = cv.SIFT_create()
-    # bf = cv.BFMatcher(cv.NORM_L2, crossCheck=True)
-
-    #work_scale = 0.102
-    #work_scale = 0.2
-
-    #print(full_img1)
-
-    print(full_img1.size)
+   
+    print("full imge size", full_img1.size)
     print(math.sqrt(0.6 * 1000000 / full_img1.size))
     print(math.sqrt(0.1* 1000000 / full_img1.size))
     img1 = cv.resize(src=full_img1, dsize=None, fx=work_scale, fy=work_scale, interpolation=cv.INTER_LINEAR_EXACT)
@@ -58,13 +46,8 @@ def process(img1, img2):
     print("seam_scale", seams_scale)
     seam_work_aspect_ = seam_scale_ / work_scale_
     print("seam_work_aspect", seam_work_aspect_)
-
-
     # gray1 = cv.cvtColor(img1, cv.COLOR_BGR2GRAY)
     # gray2 = cv.cvtColor(img2, cv.COLOR_BGR2GRAY)
-
-    #detail::computeImageFeatures(features_finder_, feature_find_imgs, features_, feature_find_masks);
-
     #keypoints = cv.Feature2D.detect()
     featurefinder = cv.ORB_create()
     keypoints1 = featurefinder.detect(img1)
@@ -72,28 +55,41 @@ def process(img1, img2):
     #print("keypoints", keypoints)
     #print(des1)
     img3 = cv.drawKeypoints(img1, keypoints1, 0, (0, 0, 255))
-
+    keypoints1, des1 = featurefinder.detectAndCompute(img1, None)
     keypoints2, des2 = featurefinder.detectAndCompute(img2, None)
-    # keypoints2 = featurefinder.detect(img2)
-    # des2 = featurefinder.compute(img2, keypoints2)
 
-    #print("keypoints", keypoints)
     flags = cv.DrawMatchesFlags_DEFAULT
     #flags = cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS 
     #flags = cv.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS  #, cv.DRAW_MATCHES_FLAGS_DRAW_OVER_OUTIMG, cv.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS 
     img4 = cv.drawKeypoints(img1, keypoints2, None, (0, 0, 255), flags)
 
-    cv.imshow('keypoints', img4)
-    cv.waitKey(0)
+    # cv.imshow('keypoints', img4)
+    # cv.waitKey(2000)
 
     # brute force matching
 
     bf_matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
 
     matches = bf_matcher.match(des1, des2)
-    print (matches )
+    matches = sorted(matches, key=lambda x:x.distance)
+   
+    # for m in matches:
+    #     print(m.distance)
 
-    plot_images([img1,img2,img3,img4])
+    match_img = cv.drawMatches(img1, keypoints1, img2, keypoints2, matches[:20], None, flags=2)              
+    cv.imshow("match", match_img)
+    cv.waitKey(0)    
+    #plot_images([img1,img2,img4, match_img])
+    return
+
+
+
+
+
+
+
+
+
 
     #matcher = cv.detail_AffineBestOf2NearestMatcher
     #   (*features_matcher_)(features_, pairwise_matches_, matching_mask_);
@@ -101,11 +97,11 @@ def process(img1, img2):
     matcher = cv.detail_BestOf2NearestMatcher(False, 0.3, 6, 6, 3.0)
 
     print(matcher, type(matcher))
-    matches = matcher(keypoints1,keypoints2)
+    matches = matcher(des1,des2)
     print(matches)
 
 
-  
+    return
     #featurefinder.detectAndCompute(gray1,None)
 
     # kp = sift.detect(img1, None)
@@ -165,10 +161,13 @@ def process(img1, img2):
 
 if __name__ == '__main__':
 
-    folder = Path(__file__).parent /"testdata/mytest"
+    folder = Path(__file__).parent /"testdata/test1"
     pic1 = folder / "DSC_0014.JPG"
     pic2 = folder / "DSC_0015.JPG"
 
+    pic1 = folder / "boat1.jpg"
+    pic2 = folder / "boat2.jpg"
+   
 
     print(folder)
     process(pic1,pic2)
